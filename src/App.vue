@@ -1,28 +1,81 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-  </div>
+   <v-app>
+    <AppBar :estaOnline="$store.getters.estaOnLine" :titulo="nomeSistema" :urlLogo="urlLogo"/>
+      <v-main>
+        <v-container grid-list-md class="pa-0" style="max-width: 600px;">
+          <UserBar v-if="$store.getters.userBarAtivo"/>
+          <v-alert 
+              v-if="$store.getters.estaOnLine == false" 
+              v-model="mostraAlerta" 
+              class="ma-3"  
+              border="left" 
+              type="warning"
+              elevation="2"
+              dismissible dense text >
+            Você está sem acesso a internet
+          </v-alert>
+          <transition appear name="slide" mode="out-in">
+          <Router-view/>
+          </transition>
+        </v-container>
+      </v-main>
+  </v-app>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import AppBar from './components/AppBar';
+import UserBar from './components/UserBar';
 
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
+  name: 'App', 
+  components: { AppBar, UserBar}, 
+  data() {
+    return {
+      mostraAlerta: true,
+      nomeSistema: 'Painel Saúde - Visitação',
+      urlLogo: 'https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png'
+    }
+  },
+  created() {
+    window.addEventListener('offline', this.setaRedeOffLine);
+    window.addEventListener('online', this.setaRedeOnline);
+  },
+  destroyed() {
+    window.removeEventListener('online', this.setaRedeOnline);
+    window.removeEventListener('offline', this.setaRedeOffLine);
+  },
+  mounted() {
+    const onLine = window.navigator.onLine
+    this.$store.commit('setaStatusRede', onLine)
+  },
+  methods: {
+    setaRedeOnline() {
+      console.log('Online');
+      this.$store.commit('setaStatusRede', true)
+    }, 
+    setaRedeOffLine() {
+      console.log('Offline');
+      this.mostraAlerta = true;
+      this.$store.commit('setaStatusRede', false)
+    }
   }
-}
+};
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+<style scoped>
+  .slide-leave-active{
+    transition: 0s;
+  }
+  .slide-enter-active {
+    transition: 0.3s;
+  }
+  .slide-enter {
+    transform: translate(100%, 0);
+  }
+  .slide-leave-to {
+    transform: translate(-100%, 0);
+  }
+  .v-app {
+    max-width:600px;
+    margin: 0 auto;
+  }
 </style>
