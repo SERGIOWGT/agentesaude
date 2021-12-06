@@ -11,26 +11,35 @@
                 @cbMensagemErro='cbMensagemErro'
                 @cbMensagemSucesso='cbMensagemSucesso'
             /> 
-          <!--   <CadastraVisita
+            <CadastraVisita
                 v-if="operacaoAtual == enumOperacao.cadastroVisita"
                 :pacienteId='pacienteId'
                 @cbFimCadastro='fimCadastroVisita'
                 @cbMensagemAguarde='cbMensagemAguarde'
                 @cbMensagemErro='cbMensagemErro'
                 @cbMensagemSucesso='cbMensagemSucesso'
-            /> -->
+            />
+            <ConsultaCidadao 
+                v-if="operacaoAtual == enumOperacao.consultaCidadao"
+                :pacienteId='pacienteId'
+                @cbFimCadastro='fimCadastroCidadao'
+                @cbMensagemAguarde='cbMensagemAguarde'
+                @cbMensagemErro='cbMensagemErro'
+                @cbMensagemSucesso='cbMensagemSucesso'
+            />
         </v-flex>
     </v-container>
 </template>
 <script>
-  import IdentificaVisita from '../components/VisitaIdentifica';
-    //import CadastraVisita from '../components/VisitaCadastra';
-  import MessageBox from '../lastec.components/lastec-messagebox'
-  import ProgressBar from '../lastec.components/lastec-progressbar'
+    import IdentificaVisita from '../components/VisitaIdentifica';
+    import MessageBox from '../lastec.components/lastec-messagebox';
+    import ProgressBar from '../lastec.components/lastec-progressbar';
+    import ConsultaCidadao from '../components/CidadaoConsulta';
+    import CadastraVisita from '../components/VisitaCadastra';
     
     export default {
         components: {
-            IdentificaVisita, MessageBox, ProgressBar
+            IdentificaVisita, MessageBox, ProgressBar, ConsultaCidadao, CadastraVisita
         },
         data() {
           return {
@@ -51,7 +60,6 @@
           }
         },
         created() {
-            //this.somenteConsultaPaciente = temAcesso(this.$store.getters.permissionamento, 1090, 1, 'I') ? false : true
             this.$store.commit('habilitaUserbar', false)
         },
         computed: {
@@ -88,7 +96,8 @@
             },
             editaCidadao(pacienteId) {
                 this.pacienteId = pacienteId
-                this.operacaoAtual = (this.somenteConsultaPaciente) ? this.enumOperacao.consultaCidadao : this.enumOperacao.cadastroCidadao
+                //this.operacaoAtual = (this.somenteConsultaPaciente) ? this.enumOperacao.consultaCidadao : this.enumOperacao.cadastroCidadao
+                this.operacaoAtual = this.enumOperacao.consultaCidadao;
             },
             fimCadastroCidadao(volta) {
                 this.operacaoAtual = this.enumOperacao.pesquisa

@@ -4,8 +4,8 @@ axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 
 const http = axios.create({
     //baseURL: 'https://apipainelsaude.azurewebsites.net/api/'
-    baseURL: 'https://api.painelsaude.com.br/api/'
-    //baseURL: 'https://localhost:44308/api/'
+    //baseURL: 'https://api.painelsaude.com.br/api/'
+    baseURL: 'https://localhost:44308/api/'
 })
 
 http.interceptors.request.use(function (config) {
@@ -50,6 +50,7 @@ http.interceptors.response.use(function (response) {
 export default {
     autentica: (signKey, usuarioGuid) => {
         const _url = `Autenticacao/Autentica?signkey=${signKey}&userKey=${usuarioGuid}`
+        console.log(_url)
         return http.get(_url)
     },
     listaComorbidades: (token) => {
@@ -57,6 +58,10 @@ export default {
     },
     listaDoencas: (token) => {
         return http.get('tipoDoencas', {headers: {'Authorization': `bearer ${token}`}})
+    },
+    listaPacientesIndicadores: (token, microAreaId) => {
+        const _url = `pacienteIndicadores/ListaIndicadores/?microAreaId=${microAreaId}`
+        return http.get(_url, {headers: {'Authorization': `bearer ${token}`}})
     },
     listaPacientesMicroArea(token, microAreaId) {
         const url = `pacientes/listaCompleta?ordenacao=0`
@@ -96,14 +101,6 @@ export default {
         }
 
         return http.post(url, paramPost, {headers: {'Authorization': `bearer ${token}`} })
-    },
-    listaPacienteSintomas: (token, pacienteId) => {
-        const _url = `pacienteSintomas/${pacienteId}`
-        return http.get(_url, {headers: {'Authorization': `bearer ${token}`}})
-    },
-    listaPacienteComorbidades: (token, pacienteId) => {
-        return http.get(`pacienteComorbidades/${pacienteId}`, {headers: {'Authorization': `bearer ${token}`}})
-
     },
     listaPacienteUltimaVisita (token, pacienteId) {
         const url = `pacienteVisitas/ListaUltimaVisita?pacienteId=${pacienteId}`
@@ -238,6 +235,9 @@ export default {
         const url = 'tipoSintomas'
         return http.get(url, {headers: {'Authorization': `bearer ${token}`}})
     },
+    listaTipoDesfechoVisita: (token) => {
+        return http.get('tipoDesfechoVisita', {headers: {'Authorization': `bearer ${token}`}})
+    },
     listaTipoAcaoVisita: (token) => {
         return http.get('tipoAcaoVisitas', {headers: {'Authorization': `bearer ${token}`}})
     },
@@ -251,6 +251,8 @@ export default {
         let _url = `TipoMotivoVisitaAnaliticos`
         if (tipoMotivoVisitaId)
             _url += `?tipoMotivoVisitaId=${tipoMotivoVisitaId}`
+
+        console.log('listaTipoMotivoAnaliticoVisita', _url)
         return http.get(_url, {headers: {'Authorization': `bearer ${token}`}})
     },
     listaTipoSolucaoVisita: (token, cidadeId) => {
@@ -270,5 +272,13 @@ export default {
     listaUsuarios: (token, cidadeId) => {
         const _url = `Usuarios/ListaCompleta?cidadeId=${cidadeId}`
         return http.get(_url, {headers: {'Authorization': `bearer ${token}`}})
+    },
+    salvaVisita: (token, id, params) => {
+        var _url = (id == 0) ? 'pacienteVisitas' : `pacienteVisitas/${id}`
+        params.id = id
+        
+        return (id == 0) ?
+                    http.post(_url, params, { headers: { 'Authorization': `bearer ${token}`}}) 
+                        : http.put(_url, params, { headers: { 'Authorization': `bearer ${token}`}});
     },
 }

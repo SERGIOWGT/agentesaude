@@ -1,19 +1,32 @@
 <template>
   <v-layout class="pa-0 ma-0" align-content-center justify-end>
     <MessageBox :tipo="tipoMensagem" :mensagem="mensagem" @cb= 'mensagem = ""'/>        
+    <QuestionBox v-if="estaPerguntando"
+                 titulo="Baixa dos dados da Nuvem" 
+                 mensagem="Confirma a baixa dos dados da nuvem para esse dispositivo?" 
+                 tituloBotaoOk="Concordo"
+                 tituloBotaoNo="Cancela"
+                 maxWidth="270"
+                 @cbOk= "cbBotaoOk"
+                 @cbNo= "cbBotaoNo"
+    />
     <ProgressBar :mensagem="mensagemAguarde"/>
-    <v-container v-show="mostraTela">
-      <v-row dense v-for="item in funcionalidades" :key="item.id" > 
+    <v-flex v-if="estaLogando">
+      <Login :tokenSistema="tokenSistema" @cbAutenticado= "cbAutenticado"/>
+    </v-flex>
+    <v-flex v-else>
+      <v-container v-show="mostraTela">
+      <v-row  dense v-for="item in funcionalidades" :key="item.id" > 
         <v-col cols="12">
           <v-layout class="px-2 py-2" v-show="item.ativo==true">
             <v-expansion-panels focused>
-              <v-expansion-panel class="py-1 blue-grey lighten-5">
+              <v-expansion-panel  class="py-1 blue-grey lighten-5">
                 <v-expansion-panel-header disable-icon-rotate v-on:click="executaFuncao(item.id)">    
                   <div class="d-flex align-center">
                       <v-icon :color="item.iconColor">{{item.icon}}</v-icon><span :class="'ml-2 ' + item.textColor"> {{item.text}}</span>
                   </div>
                   <template v-slot:actions>
-                    <v-icon v-on:click="executaFuncao(item.id)" :color="item.iconColor">mdi-arrow-right-circle-outline</v-icon>
+                    <v-icon :color="item.iconColor">mdi-arrow-right-circle-outline</v-icon>
                   </template>
                 </v-expansion-panel-header>
               </v-expansion-panel>
@@ -22,6 +35,7 @@
         </v-col>
       </v-row>
     </v-container>
+    </v-flex>
   </v-layout>
 </template>
 <script>
@@ -29,13 +43,22 @@
   import mainService from '../services/mainService'
   import ProgressBar from '../lastec.components/lastec-progressbar.vue'
   import MessageBox from '../lastec.components/lastec-messagebox'
+  import QuestionBox from '../lastec.components/lastec-questionbox'
+  import Login from '../lastec.components/lastec-login'
+  import proxyService from '../services/proxyService'
 
   export default {
     components: {
-      ProgressBar, MessageBox
+      ProgressBar, Login, MessageBox, QuestionBox
     },
     data() {
       return {
+        tokenSistema:'ebe4c237-f13d-11eb-a054-566fe1410274',
+
+        estaLogando: false,
+        estaPerguntando: false,
+        ultimaOpcao: 0,
+
         // Dados
         tipoMensagem: 0,
         mensagem: '',
@@ -48,7 +71,7 @@
           {
             id: 1, 
             textColor: color.textColor.menuHome, 
-            text: 'Baixe da nuvem dados dos cidadãos atualizados para visitação ', 
+            text: 'Clique aqui e baixe da nuvem os dados  dos cidadãos atualizados para inicio da visitação ', 
             icon: 'mdi-cloud-download', 
             iconColor: color.icon.menuHome, 
             ativo: false,
@@ -84,11 +107,11 @@
       }
     },
     created() {
-      this.preparaTela()
       this.$store.commit('habilitaUserbar', true)
+      this.$store.commit('init')
     },
     async mounted() {
-      await this.registraApi()
+      this.preparaTela()
     },
     computed: {
       mensagemErro: {
@@ -107,9 +130,12 @@
       },
     },
     methods: {
-      async registraApi() {
+      async cbAutenticado(param) {
+        
+        this.mostraTela = false;
+        const usuarioGuid = param.usuarioGuid;
+        const nomeUsuario = param.nomeUsuario;
         this.mensagemAguarde =  'Registrando o dispositivo na nuvem... Aguarde!'
-        const usuarioGuid = '9a117082-58cc-4ff7-be79-e6cb25cc118f'
 
         this.isLoading = true
         let erro = false
@@ -120,8 +146,8 @@
             this.mensagemErro =  'Autenticando API: ' + mainService.catchPadrao(err)
             erro = true
         });
-        this.mensagemAguarde =  ''
         if (erro) {
+          this.mensagemAguarde =  ''
           return
         }
 
@@ -133,17 +159,20 @@
 
         const _dados = resposta.data
         if (!((_dados.token) && (_dados.cidadesAutorizadasDTO))) {
+          this.mensagemAguarde =  ''
           this.mensagemErro =  'Erro na autenticacao da Api. [ErroId=32158] '
           return;
         }
 
         const _cidades = _dados.cidadesAutorizadasDTO
         if (_cidades.length == 0) {
+          this.mensagemAguarde =  ''
           this.mensagemErro =  'Erro na autenticacao da Api. [ErroId=32157] '
           return
         }
 
         if (!((_cidades[0].cidadeId) && (_cidades[0].nomeCidade))) {
+          this.mensagemAguarde =  ''
           this.mensagemErro =  'Erro na autenticacao da Api. [ErroId=32156] '
           return
         }
@@ -152,6 +181,7 @@
           token: _dados.token,
           cidadeId: _cidades[0].cidadeId,
           nomeCidade: _cidades[0].nomeCidade,
+          nomeUsuario: nomeUsuario,
           autenticado: true,
           unidadeSaudeId: _cidades[0].unidadeSaudeId,
           nomeUnidadeSaude: _cidades[0].nomeUnidadeSaude,
@@ -163,28 +193,218 @@
           nomeLogradouro: _cidades[0].nomeLogradouro,
         }
         this.$store.commit('autenticaApi', _param)
+        this.mostraTela = false;
+        this.estaLogando = false;
+
+        const delay = (time) => {return new Promise(resolve => setTimeout(resolve, time))}
+        delay(1000).then(() => {
+          this.mensagemAguarde =  ''
+          if (this.ultimaOpcao == 1) {
+            this.executaFuncao(this.ultimaOpcao)
+          }
+          else 
+            this.$router.push('upload') 
+        });
+        this.mensagemAguarde =  ''
       },
       executaFuncao(id) {
+        this.ultimaOpcao = id;
         switch (id) {
           case 1:
-            this.$router.push('downloadData');
+            if (!this.$store.getters.estaOnLine) {
+              this.mensagemErro = 'É necessário acesso a internet para baixar os dados da nuvem'
+              return ;
+            }
+            if (this.$store.getters.dadosBaixados) {
+              this.mensagemErro = 'Já há dados baixados para esse dispositivo'
+              return ;
+            }
+            if (!this.$store.getters.estaLogado) {
+              this.estaLogando = true
+              return ;
+            }
+            this.executaDownload();
             break;
           case 2:
+            if (!this.$store.getters.dadosBaixados) {
+              this.mensagemErro = 'É necessário baixar os dados da nuvem para esse dispositivo'
+              return ;
+            }
             this.$router.push('visita');
             break;
           case 3:
-            this.$router.push('uploadData') 
+            if (!this.$store.getters.estaOnLine) {
+              this.mensagemErro = 'É necessário acesso a internet para baixar os dados da nuvem'
+              return ;
+            }
+            if (!this.$store.getters.dadosBaixados) {
+              this.mensagemErro = 'É necessário baixar os dados da nuvem para esse dispositivo'
+              return ;
+            }
+            if (!this.$store.getters.estaLogado) {
+              this.estaLogando = true
+              return ;
+            }
+            this.$router.push('upload') 
             break
           default:
             this.mensagemErro = `funcionalidade não implementada [id=${id}]`
         }
       },
       preparaTela() {
-        for (var i=0; i < this.funcionalidades.length; ++i) {
-          this.funcionalidades[i].ativo = true
-        }
+        this.mostraTela = false
+        this.funcionalidades[0].ativo = this.funcionalidades[1].ativo = this.funcionalidades[2].ativo = true;
         this.mostraTela = true
       },
+      async cbBotaoOk() {
+        
+        this.estaPerguntando = false;
+        await this.baixaDados();
+      },
+      cbBotaoNo() {
+        this.estaPerguntando = false;
+      },
+      executaDownload() {
+        this.estaPerguntando = true;
+      },
+      async baixaDados() {
+        let contador = 0;
+        this.mostraTela = false        
+        let erro = false;
+        this.mensagemAguarde = 'Buscando os cidadãos da Micro Área... Aguarde';
+
+        // Baixa as tabelas principais
+        let resp = await proxyService.listaComorbidades()
+          .catch (err => {this.mensagemAguarde = ''; erro = true; this.mensagemErro =  mainService.catchPadrao(err); });
+        if (erro) {
+          this.isLoading = false;
+          return;
+        }
+        let comorbidades = resp.status == 200 ? resp.data : [];
+
+        resp = await proxyService.listaSintomas()
+        if (erro) {
+          this.isLoading = false;
+          return;
+        }
+        let sintomas = resp.status == 200 ? resp.data : [];
+
+        resp = await proxyService.listaDoencas()
+        if (erro) {
+          this.isLoading = false;
+          return;
+        }
+        let doencas = resp.status == 200 ? resp.data : [];
+
+        resp = await proxyService.listaTipoMotivoVisita()
+        if (erro) {
+          this.isLoading = false;
+          return;
+        }
+        let motivosVisita = resp.status == 200 ? resp.data : [];
+
+        resp = await proxyService.listaTipoMotivoAnaliticoVisita()
+        if (erro) {
+          this.isLoading = false;
+          return;
+        }
+        let motivosAnaliticoVisita = resp.status == 200 ? resp.data : [];
+
+        resp = await proxyService.listaTipoAcaoVisita()
+        if (erro) {
+          this.isLoading = false;
+          return;
+        }
+        let acoesVisita = resp.status == 200 ? resp.data : [];
+
+        resp = await proxyService.listaTipoDesfechoVisita()
+        if (erro) {
+          this.isLoading = false;
+          return;
+        }
+        let desfechosVisita = resp.status == 200 ? resp.data : [];
+
+        // Lista todos os Pacientes da Micro Area
+        resp = await proxyService.listaPacientesMicroArea(1, '')
+          .catch (err => {this.mensagemAguarde = ''; erro = true; this.mensagemErro =  mainService.catchPadrao(err); });
+
+        if (erro) {
+          this.isLoading = false;
+          return;
+        }
+        
+        let dados = {
+            acoesVisita: acoesVisita,
+            bairros: [],
+            cidadaos: [],
+            comorbidades: comorbidades,
+            desfechosVisita: desfechosVisita,
+            doencas: doencas,
+            logradouros: [],
+            motivosVisita: motivosVisita,
+            motivosAnaliticoVisita: motivosAnaliticoVisita,
+            sintomas: sintomas,
+        }
+        
+        // Para cada Paciente, busca os sintomas e comborbidades e salva
+        const listaCidadaos = resp.status == 200 ? resp.data : []
+        for(let i=0; i < listaCidadaos.length; ++i) {
+          let cidadao = listaCidadaos[i];
+
+          let infoCidadao = {
+            id : cidadao.id,
+            bairroId: cidadao.bairroId,
+            cartaoSUS: cidadao.CartaoSUS,
+            celular : cidadao.celular,
+            celular2 : cidadao.celular2,
+            descricaoEndereco : '',
+            eMail : cidadao.eMail,
+            nome : cidadao.nome,
+            logradouroId: cidadao.logradouroId,
+            microAreaId : cidadao.microAreaId,
+            nomeLogradouro : cidadao.nomeLogradouro,
+            numeroEndereco : cidadao.numeroEndereco,
+            complementoEndereco : cidadao.complemento,
+            telefoneContato : cidadao.telefoneContato,
+            tipoEstadoSaudeId: cidadao.TipoEstadoSaudeId,
+            sintomas: [],
+            comorbidades: []
+          };
+          dados.cidadaos.push(cidadao);
+
+          if (dados.bairros.findIndex(x => x.id==cidadao.bairroId) === -1) {
+            dados.bairros.push({id: cidadao.bairroId, nome: cidadao.nomeBairro});
+          }
+
+          if (dados.logradouros.findIndex(x => x.id==cidadao.logradouroId) === -1) {
+            dados.logradouros.push({id: cidadao.logradouroId, nome: cidadao.nomeLogradouro, bairroId: cidadao.bairroId});
+          }
+
+          dados.logradouros.sort((a, b) => {const a_ = a.nome.toUpperCase(); const b_ = b.nome.toUpperCase(); return a_ == b_ ? 0 : a_ > b_ ? 1 : -1});
+          dados.bairros.sort((a, b) => {const a_ = a.nome.toUpperCase(); const b_ = b.nome.toUpperCase(); return a_ == b_ ? 0 : a_ > b_ ? 1 : -1});
+        }
+        // busca comorbidades e sintomas do paciente
+        let resp2 = await proxyService.listaPacientesIndicadores(1);
+        if (resp2.status == 200) {
+          const listaIndicadores = resp2.data;
+          let indice = -1;
+          let contador=0;
+          listaIndicadores.forEach(indicador => {
+            indice = dados.cidadaos.findIndex((cidadao) => {return cidadao.id === indicador.pacienteId});
+            if (indice >= 0) {
+              dados.cidadaos[indice].sintomas = indicador.sintomas;
+              dados.cidadaos[indice].comorbidades = indicador.comorbidades;
+              dados.cidadaos[indice].doencas = indicador.doencas;
+            }
+          });
+        }
+        this.$store.commit('persisteDados', dados)
+        
+        this.mensagemAguarde = '';
+        this.mensagemSucesso = listaCidadaos.length == 0 ? 'Nenhum registro baixado' : listaCidadaos.length == 1 ? 'Um registro baixado com sucesso' : `${listaCidadaos.length} registros baixados com sucesso`;
+        this.preparaTela()
+        this.mostraTela = true
+      }
     }
   }
 </script>

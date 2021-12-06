@@ -1,29 +1,44 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import homeView from '../views/HomeView.vue'
-import downloadDataView from '../views/DownloadDataView.vue'
 import visitaView from '../views/VisitaView.vue'
+import uploadView from '../views/UploadView.vue'
 
 Vue.use(Router)
 
 const routes = [
     {
-        path: '/',
+        path: '/home',
         name: 'homeView',
         component: homeView
-    },
-    {
-        path: '/downloadData',
-        name: 'downloadDataView',
-        component: downloadDataView
     },
     {
         path: '/Visita',
         name: 'visitaView',
         component: visitaView
+    },
+    {
+        path: '/Upload',
+        name: 'uploadView',
+        component: uploadView
     }
 ]
-
 const RotasApp = new Router({routes})
+RotasApp.beforeEach((to, from, next) => {
+    console.log("from", from.path)
+    console.log("to", to.path)
+    console.log(`from => ${from.path}, to => ${to.path}`)
+
+    if (to.path =='/') 
+        next('/home') ;
+    else if ((from.path =='/') && (to.path =='/home')) 
+        next();
+    else if (from.path =='/home') 
+        next();
+    else if ((from.path =='/') && ((to.path =='/visita') ||  (to.path =='/upload')))
+        next('/home') ;
+    else if ((from.path =='/visita') || (from.path =='/upload'))
+        next();
+})
 
 export default RotasApp

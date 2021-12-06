@@ -52,11 +52,11 @@
     </v-container>
 </template>
 <script>
-    import mainService from '../services/mainService'
     import PesquisaPorNome from '../components/PesquisaCidadaoPorNome'
     import TituloPagina from '../components/TituloPagina'
     import PesquisaPorLocalidadeSintomas from '../components/PesquisaCidadaoPorLocalidadeSintomas'
-
+    import {stringDataBr2Sql} from '../bibliotecas/formataValores'
+    
     export default {
         components: {
             PesquisaPorNome, PesquisaPorLocalidadeSintomas, TituloPagina
@@ -64,12 +64,6 @@
         data() {
           return {
             statusPainel: 1, //0-fechados; 
-
-
-            enumTipoPesquisa: {
-              porNome: 0,
-              porLocalidade: 1,
-            },
 
             buscandoDados: true,
             gridPronto: false,
@@ -106,7 +100,7 @@
           }
         },
         created() {
-            this.cidadePadrao = this.$store.getters.cidadePadrao
+            this.cidadePadrao = this.$store.getters.cidadePadrao;
         },
         watch: {
             model (val) {
@@ -151,13 +145,132 @@
                     this.statusPainel = 2
                 }
             },
+            montaGridPorId() {
+                console.log('montaGridPorId', this.infoPesquisa.pacienteId)
+
+                this.isLoadingGrid = true;
+                let _cidadaos = this.$store.getters.cidadaos;
+                this.infoPesquisa.lista = _cidadaos.filter(x => x.id === this.infoPesquisa.pacienteId );
+                this.gridPronto = true
+                this.mensagemAguarde = ''
+                this.fechaPainel()
+                this.isLoadingGrid = false
+            },
+            montaGridPorOutros() {
+                this.mensagemAguarde = ''
+                this.isLoadingGrid = true
+                let contador = 0;
+                let _dataFimVisita = this.infoPesquisa.dataFimVisita
+
+                if (_dataFimVisita)
+                    _dataFimVisita = stringDataBr2Sql(_dataFimVisita)
+            
+                const filtroOk = (cidadao) => {
+
+                    if (contador >= 150) {
+                        return false
+                    }   
+                    if ((_dataFimVisita) && (cidadao.dataUltimaVisita)) {
+                        if (cidadao.id === 23) {
+                            console.log('cidadao23', cidadao.nome, cidadao.dataUltimaVisita, _dataFimVisita)
+                        }
+                        if (cidadao.dataUltimaVisita > _dataFimVisita) {
+                            return false
+                        };
+                    }
+
+                    if (this.infoPesquisa.logradouroId) {
+                        if (cidadao.logradouroId !== this.infoPesquisa.logradouroId) {
+                            return false
+                        };
+                    }
+
+                    if (this.infoPesquisa.bairroId) {
+                        if (cidadao.bairroId !== this.infoPesquisa.bairroId){
+                            return false;
+                        }
+                    }
+                    if (this.infoPesquisa.numeroEndereco) {
+                        if (cidadao.numeroEndereco !== this.infoPesquisa.numeroEndereco){
+                            return false;
+                        }
+                    }
+                    if ((this.infoPesquisa.sintomas) && (this.infoPesquisa.sintomas.length > 0)) {
+                        if ((cidadao.sintomas) && (cidadao.sintomas.length > 0)) {
+                            let achou = false;
+                            for (let i=0; i < this.infoPesquisa.sintomas.length; ++i) {
+                                for (let j=0; j < cidadao.sintomas.length; ++j) {
+                                    console.log('teste', this.infoPesquisa.sintomas[i].id, cidadao.sintomas[j].id)
+                                    if (this.infoPesquisa.sintomas[i].id === cidadao.sintomas[j].id) {
+                                        console.log(cidadao.nome, this.infoPesquisa.sintomas[i].id, cidadao.sintomas[j].id, this.infoPesquisa.sintomas[i].id === cidadao.sintomas[j].id)
+                                        achou = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!achou){
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    }         
+                    if ((this.infoPesquisa.comorbidades) && (this.infoPesquisa.comorbidades.length > 0)) {
+                        if ((cidadao.comorbidades) && (cidadao.comorbidades.length > 0)) {
+                            let achou = false;
+                            for (let i=0; i < this.infoPesquisa.comorbidades.length; ++i) {
+                                for (let j=0; j < cidadao.comorbidades.length; ++j) {
+                                    if (this.infoPesquisa.comorbidades[i].id === cidadao.comorbidades[j].id) {
+                                        achou = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!achou){
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    }         
+                     
+                    if ((this.infoPesquisa.doencas) && (this.infoPesquisa.doencas.length > 0)) {
+                        if ((cidadao.doencas) && (cidadao.doencas.length > 0)) {
+                            let achou = false;
+                            for (let i=0; i < this.infoPesquisa.doencas.length; ++i) {
+                                for (let j=0; j < cidadao.doencas.length; ++j) {
+                                    if (this.infoPesquisa.doencas[i].id === cidadao.doencas[j].id) {
+                                        achou = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!achou){
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    }         
+                    ++contador;
+                    return true;
+                }
+                let _cidadaos = this.$store.getters.cidadaos;
+                this.infoPesquisa.lista = _cidadaos.filter(filtroOk);
+                this.gridPronto = true
+                this.mensagemAguarde = ''
+                this.fechaPainel()
+                this.isLoadingGrid = false
+            },
             cbBuscaPorPacienteId (param) {
-                this.infoPesquisa.pacienteId = param.pacienteId
-                this.infoPesquisa.ordenacao = 0
-                this.listaPesquisa(this.enumTipoPesquisa.porNome)
+                // Guarda o parametro
+                this.infoPesquisa.pacienteId = param.pacienteId;
+
+                this.montaGridPorId();
             },
             cbBuscaPorOutros (v) {
-                
+                // guarda parametros
+                this.infoPesquisa.pacienteId = 0;
                 this.infoPesquisa.unidadeSaudeId = v.unidadeSaudeId
                 this.infoPesquisa.microAreaId = v.microAreaId
                 this.infoPesquisa.bairroId = v.bairroId
@@ -171,7 +284,8 @@
                 this.infoPesquisa.dataFimVisita = v.dataMaiorVisita
                 this.infoPesquisa.ordenacao = v.ordenacao
 
-                this.listaPesquisa(this.enumTipoPesquisa.porLocalidade)
+                // Monta Grid
+                this.montaGridPorOutros();
             },
             editaCidadao(pacienteId) {
                 this.$emit('cbEditaCidadao', pacienteId)
@@ -191,71 +305,11 @@
                 return (value == null || value === '');
             },
             refresh() {
+                console.log('refresh')
                 if ((this.infoPesquisa.pacienteId == 0) || (this.infoPesquisa.pacienteId == null))
-                    this.listaPesquisa(this.enumTipoPesquisa.porLocalidade)
+                    this.montaGridPorOutros();
                 else 
-                    this.listaPesquisa(this.enumTipoPesquisa.porNome)
-            },
-
-            async listaPesquisa(tipoPesquisa) {
-                let _param = {cidadeId: this.cidadePadrao.id}
-
-                if (tipoPesquisa == this.enumTipoPesquisa.porNome) {
-                    _param.id= this.infoPesquisa.pacienteId
-                    _param.ordenacao = 0
-                } else {
-                    _param.unidadeSaudeId= this.infoPesquisa.unidadeSaudeId
-                    _param.microAreaId= this.infoPesquisa.microAreaId
-                    _param.bairroId= this.infoPesquisa.bairroId
-                    _param.logradouroId= this.infoPesquisa.logradouroId
-                    _param.numeroEndereco= this.infoPesquisa.numeroEndereco
-                    _param.complementoEndereco= this.infoPesquisa.complementoEndereco
-                    _param.dataInicioVisita= this.infoPesquisa.dataInicioVisita
-                    _param.dataFimVisita= this.infoPesquisa.dataFimVisita
-                    _param.ordenacao = this.infoPesquisa.ordenacao
-
-                    _param.sintomas = []
-                    this.infoPesquisa.sintomas.forEach((linha) => {
-                        _param.sintomas.push(linha.id)
-                    })
-
-                    _param.comorbidades = []
-                    this.infoPesquisa.comorbidades.forEach((linha) => {
-                        _param.comorbidades.push(linha.id)
-                    })
-                    _param.doencas = []
-                    this.infoPesquisa.doencas.forEach((linha) => {
-                        _param.doencas.push(linha.id)
-                    })
-                }
-                this.isLoadingGrid = true
-                this.mensagemAguarde = 'Consultando dados do cidadão! Aguarde...'
-                await mainService.listaPacientesCompleta(_param)
-                .then(_resposta => {
-                    this.mensagemAguarde = ''
-                    if (_resposta.status == 200) {
-                        this.infoPesquisa.lista = _resposta.data
-
-                        // Carrega os dados
-/*                         this.infoPesquisa.lista.forEach((linha) => {
-                            const _paciente = {
-                                id: linha.id,
-                                nome: linha.nome,
-                                endereco: this.enderecoCidadaoConcatena(linha.nomeLogradouro, linha.numeroEndereco, linha.complementoEndereco),
-                            }
-                            localStorage.setItem(`paciente__${linha.id}`, JSON.stringify(_paciente))
-                        }) */
-                        this.gridPronto = true
-                        this.fechaPainel()
-                    } else {
-                        this.mensagemErro = _resposta.message
-                    }
-                })
-                .catch((response) => {
-                    this.mensagemAguarde = '';
-                    this.mensagemErro =  mainService.catchPadrao(response)
-                })
-                this.isLoadingGrid = false
+                    this.montaGridPorId();
             },
         }
     }

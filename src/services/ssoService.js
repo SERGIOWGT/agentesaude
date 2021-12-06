@@ -3,8 +3,8 @@ import axios from 'axios'
 axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 
 const http = axios.create({
-    //baseURL: 'https://lastecweb01.azurewebsites.net/api/'
-    baseURL: 'https://sso.painelsaude.com.br/api/'
+    baseURL: 'https://sso.homolog.painelsaude.com.br/api/'
+    //baseURL: 'https://sso.painelsaude.com.br/api/'
     //baseURL: 'http://localhost:56486/api/'
 })
 
@@ -118,5 +118,23 @@ export default {
         }
         return http.put('login/EsqueciSenha', params)
     },
+    catchPadrao: (response) => {
+        let mensagemErro = ''
+        if (response) {
+            if (response.erros) {
+                let _mensagem = ""
+                response.erros.forEach(el => {
+                    _mensagem += el.mensagem
+                });
+                mensagemErro=_mensagem
+            }
+            else
+                mensagemErro=response.message
+
+        } else {
+            mensagemErro=response.message
+        }
+        return mensagemErro;
+    }
 
 }

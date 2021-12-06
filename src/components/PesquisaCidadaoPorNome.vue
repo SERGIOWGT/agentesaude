@@ -43,7 +43,6 @@
                                 placeholder="Nome do Cidadão"
                                 clearable
                                 :items="pacientes"
-                                :search-input.sync="sincronizaPaciente"
                                 item-value="id"
                                 item-text="nome"
                                 hide-no-data
@@ -104,6 +103,9 @@
                 this.dataInicio = data2String(new Date(new Date()-(30*24*60*60*1000)), 'BR')
             }
         },
+        mounted() {
+            this.pacientes = this.$store.getters.cidadaos;
+        },
         watch: {
             aberto(v) {
                 if (v) {
@@ -119,19 +121,6 @@
             abrePainel(v) {
                 this.$emit('cbAbriu', v == null ? false : true)
             }
-        },
-        computed: {
-            sincronizaPaciente: {
-                get () {
-                    return ''
-                },
-                set (searchInput) {
-                    if ((searchInput) && (searchInput.length >= 3)) {
-                        this.listaPacientePorNome(this.cidadePadrao.id, searchInput)
-                    } else 
-                        this.pacientes = []
-                }
-            },
         },
         methods: {
             busca() {

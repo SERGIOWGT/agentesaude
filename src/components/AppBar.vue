@@ -10,7 +10,7 @@
           <h4>{{titulo}}</h4>
         </v-col>
         <v-col  class="d-flex justify-center" cols="2">
-          <v-icon :color="estaOnline == true ? '': 'red'" >{{iconRede(estaOnline)}}</v-icon>
+          <v-icon v-if="!estaOnline" color="warning">mdi-wifi-strength-alert-outline</v-icon>
         </v-col>
       </v-row>
     </v-app-bar>
@@ -30,10 +30,8 @@
       }
     },
     created() {
-      console.log(this.estaOnline)
     },
     methods: { 
-      iconRede: (v) => { return v == true ? 'mdi-lan-connect' : 'mdi-lan-disconnect'},
       goHome() {
         this.$router.push('/Home').catch(()=>{})
       }

@@ -4,16 +4,7 @@
       <v-main>
         <v-container grid-list-md class="pa-0" style="max-width: 600px;">
           <UserBar v-if="$store.getters.userBarAtivo"/>
-          <v-alert 
-              v-if="$store.getters.estaOnLine == false" 
-              v-model="mostraAlerta" 
-              class="ma-3"  
-              border="left" 
-              type="warning"
-              elevation="2"
-              dismissible dense text >
-            Você está sem acesso a internet
-          </v-alert>
+
           <transition appear name="slide" mode="out-in">
           <Router-view/>
           </transition>
