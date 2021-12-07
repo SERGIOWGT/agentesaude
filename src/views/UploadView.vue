@@ -2,7 +2,7 @@
     <v-container fluid style="height: 100vmax;" class="pa-1">
         <MessageBox :tipo="tipoMensagem" :mensagem="mensagem" @cb= 'mensagem = ""'/>        
         <ProgressBar :mensagem="mensagemAguarde"/>
-        <TituloPagina titulo="Visitas Cadastradas no Dispositivo" @cbAnterior="$router.back()"/>
+        <TituloPagina titulo="Visitas Cadastradas no dispositivo" @cbAnterior="$router.back()"/>
        
         <v-flex v-show="buscandoDados==false">
             <v-card flat class="pt-0 mt-0" tile>
@@ -157,7 +157,9 @@
                 _visitas.forEach(v => {
                     const _paciente = store.getters.cidadao(v.dados.pacienteId)
                     const _motivoAnalitico = _motivosAnaliticosVisita.find((x) => {return x.id === v.dados.tipoMotivoVisitaAnaliticoId});
+                    console.log(_motivoAnalitico)
                     const _motivo = _motivosVisita.find((x) => {return x.id === _motivoAnalitico.tipoMotivoVisitaId});
+                    console.log(_motivo)
                     const _acao = _acoesVisita.find((x) => {return x.id === v.dados.tipoAcaoVisitaId});
                     
                     _enderecoCompleto = _paciente.nomeLogradouro + (_paciente.numeroEndereco ? ', ' + _paciente.numeroEndereco : '')
@@ -190,7 +192,6 @@
             },
             async uploadVisita(id) {
                 if (!store.getters.estaLogado) {
-                    console.log('caralho');
                     this.mensagemErro = 'Você precisa se logar para enviar as visitas'
                     return;
                 }

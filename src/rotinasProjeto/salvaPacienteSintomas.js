@@ -14,7 +14,6 @@ export default {
                 let item = {}
 
                 _dataInicio = _dataInicio.setDate(_dataHoje.getDate() - sintomas[i].dias)
-                console.log('_dataHoje, _dataInicio', _dataHoje, _dataInicio)
 
                 item.id = sintomas[i].id
                 item.dataInicio = data2String(_dataInicio, 'SQL')

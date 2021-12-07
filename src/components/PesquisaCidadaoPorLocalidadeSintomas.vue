@@ -237,7 +237,7 @@
                 comorbidades: [],
                 doencas: [],
 
-                dataMaiorVisita: '16/10/2021',
+                dataMaiorVisita: '',
                 ordenacao: 'N',
 
                 todosSintomas: [],
@@ -309,6 +309,8 @@
             },
         },
         mounted() {
+            this.dataMaiorVisita = data2String(new Date(), 'BR')
+
             this.todasDoencas = this.$store.getters.doencas;
             this.todosSintomas = this.$store.getters.sintomas;
             this.todasComorbidades = this.$store.getters.comorbidades;

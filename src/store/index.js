@@ -26,7 +26,9 @@ const store = new Vuex.Store({
       estaOnLine: true,
       userBarAtivo: false,
       autenticado: false,
-      apiToken: ''
+      apiToken: '',
+      dataLogin: '',
+      horaLogin: '',
     },
     db: {
       tbConfig: {
@@ -43,7 +45,6 @@ const store = new Vuex.Store({
         nomeUsuario: '',
         usuarioId: '',
         usuarioGuid: '',
-        dataLogin: new Date(),
         cidadePadrao: {
             id: 0,
             nome: ''
@@ -115,6 +116,8 @@ const store = new Vuex.Store({
       if(localStorage.getItem(enumNomeTabela.desfechoVisita)) {
         state.db.tbDesfechosVisita = JSON.parse(localStorage.getItem(enumNomeTabela.desfechoVisita) ||'[]');
       }
+
+      console.log('state.db.tbAcoes', state.db.tbAcoes)
     },
     autenticaApi (state, obj) {
         state.statusApp.autenticado = obj.autenticado;
@@ -129,11 +132,19 @@ const store = new Vuex.Store({
         state.db.tbUsuario.unidadeSaudePadrao.nome = obj.nomeUnidadeSaude
         state.db.tbUsuario.microAreaPadrao.id = obj.microAreaId
         state.db.tbUsuario.microAreaPadrao.nome = obj.nomeMicroArea
-
         localStorage.setItem(enumNomeTabela.usuario, JSON.stringify(state.db.tbUsuario));
+
+        const agora = new Date();
+        state.statusApp.dataLogin = `${agora.getFullYear()}-${agora.getMonth() + 1}-${agora.getDate()}`;
+        state.statusApp.horaLogin = `${agora.getHours()}:${agora.getMinutes()}:${agora.getSeconds()}`;
     },
     habilitaUserbar (state, obj) {
       state.statusApp.userBarAtivo = obj
+    },
+    logout (state) {
+      state.statusApp.dataLogin = '';
+      state.statusApp.horaLogin = '';
+      state.statusApp.userBarAtivo = false;
     },
     setaStatusRede (state, status) {
       state.statusApp.estaOnLine = status
@@ -170,24 +181,54 @@ const store = new Vuex.Store({
       localStorage.setItem(enumNomeTabela.sintoma, JSON.stringify(dados.sintomas));
       state.statusApp.dadosBaixados = true;
     },
+    limpaDados(state) {
+      state.db.tbAcoes = [];
+      state.db.tbBairros = [];
+      state.db.tbCidadaos = [];
+      state.db.tbComorbidades = [];
+      state.db.tbDoencas = [];
+      state.db.tbLogradouros = [];
+      state.db.tbMotivosVisita = [];
+      state.db.tbMotivosAnaliticosVisita = [];
+      state.db.tbDesfechosVisita = [];
+      state.db.tbSintomas = [];
+
+      state.db.tbConfig.dataCarga = '';
+      state.db.tbConfig.usuarioId = '';
+      state.db.tbConfig.email = '';
+      state.db.tbConfig.microAreaId = 0;
+      state.db.tbConfig.nomeMicroArea = '';
+      state.db.tbConfig.versao = 'v1.0'
+     
+      localStorage.removeItem(enumNomeTabela.acao)
+      localStorage.removeItem(enumNomeTabela.bairro)
+      localStorage.removeItem(enumNomeTabela.cidadao)
+      localStorage.removeItem(enumNomeTabela.comorbidade)
+      localStorage.removeItem(enumNomeTabela.config)
+      localStorage.removeItem(enumNomeTabela.desfechoVisita)
+      localStorage.removeItem(enumNomeTabela.doenca)
+      localStorage.removeItem(enumNomeTabela.logradouro)
+      localStorage.removeItem(enumNomeTabela.motivoVisita)
+      localStorage.removeItem(enumNomeTabela.motivoAnaliticoVisita)
+      localStorage.removeItem(enumNomeTabela.sintoma)
+      localStorage.removeItem(enumNomeTabela.usuario)
+      localStorage.removeItem(enumNomeTabela.visita)
+      state.statusApp.dadosBaixados = false;
+    },
     salvaVisita(state, dados) {
       state.db.tbVisitas = JSON.parse(localStorage.getItem(enumNomeTabela.visita) || '[]');
       state.db.tbVisitas.push(dados);
       localStorage.setItem(enumNomeTabela.visita, JSON.stringify(state.db.tbVisitas));
 
       // Salva data da última visita no paciente
-      console.log(dados)
       let cidadao = state.db.tbCidadaos.find((x) => {return x.id === dados.dados.pacienteId});
-      console.log(cidadao)
       if (cidadao) {
-        console.log(cidadao.dataUltimaVisita, dados.dados.dataVisita)
         cidadao.dataUltimaVisita = dados.dados.dataVisita
         localStorage.setItem(enumNomeTabela.cidadao, JSON.stringify(state.db.tbCidadaos));
       }
     },
     visitaUploaded(state, dados) {
       if (dados.guid) {
-        console.log(dados.guid)
         let visita = state.db.tbVisitas.find((x) => {return x.id === dados.guid});
 
         if (visita) {
@@ -202,7 +243,22 @@ const store = new Vuex.Store({
   modules: {
   },
   getters: {
-    estaLogado: state => state.statusApp.estaLogado,
+    estaLogado(state) {
+      if ((state.statusApp.dataLogin) && (state.statusApp.dataLogin !== '')) {
+        const [_ano, _mes, _dia] = state.statusApp.dataLogin.split("-");
+        const [_hora, _minuto, _segundo] = state.statusApp.horaLogin.split(":");
+
+        const _dataLogin = new Date(_ano, parseInt(_mes, 10) - 1, _dia, _hora, _minuto, _segundo)
+        const _agora = new Date();
+        const hours = Math.abs(_agora - _dataLogin) / 36e5;
+        console.log('dif.horas', hours)
+        if (hours > 0.40) 
+          return false;
+        
+        return true
+      }
+      return false; 
+    },
     estaOnLine: state => state.statusApp.estaOnLine,
     dadosBaixados: state => state.statusApp.dadosBaixados,
 
@@ -214,13 +270,12 @@ const store = new Vuex.Store({
     unidadeSaudePadrao: state => state.db.tbUsuario.unidadeSaudePadrao,
     userBarAtivo: state => state.statusApp.userBarAtivo && state.statusApp.estaLogado,
 
-    //
     acoesVisita: state => state.db.tbAcoes,
     bairros: state => state.db.tbBairros,
     cidadao: (state) => (id) => {return state.db.tbCidadaos.find((x) => {return x.id === id});},
     cidadaos: state => state.db.tbCidadaos,
     comorbidades: state => state.db.tbComorbidades,
-    desfechosVisitas: state => state.db.tbDesfechosVisita,
+    desfechosVisita: state => state.db.tbDesfechosVisita,
     doencas: state => state.db.tbDoencas,
     logradouros: state => state.db.tbLogradouros,
     motivosVisita: state => state.db.tbMotivosVisita,
@@ -228,7 +283,21 @@ const store = new Vuex.Store({
     sintomas: state => state.db.tbSintomas,
     visita: (state) => (id) => {return state.db.tbVisitas.find((x) => {return x.id === id});},
     visitas: state => state.db.tbVisitas,
+    numeroVisitas: state => state.db.tbVisitas.length,
+
+    numeroVisitasPendentes(state) {
+      let c=0;
+      if (state.db.tbVisitas) {
+        state.db.tbVisitas.forEach(v=>{
+          if (v.atualizado === false) 
+            c++
+        })
+      }
+      return c;
+    },
+
   }
 })
 //store.dispatch("init");
 export default store;
+

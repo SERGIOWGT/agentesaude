@@ -3,9 +3,9 @@ import axios from 'axios'
 axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 
 const http = axios.create({
-    //baseURL: 'https://apipainelsaude.azurewebsites.net/api/'
+    baseURL: 'https://api.homolog.painelsaude.com.br/api/'
     //baseURL: 'https://api.painelsaude.com.br/api/'
-    baseURL: 'https://localhost:44308/api/'
+    //baseURL: 'https://localhost:44308/api/'
 })
 
 http.interceptors.request.use(function (config) {
@@ -50,7 +50,6 @@ http.interceptors.response.use(function (response) {
 export default {
     autentica: (signKey, usuarioGuid) => {
         const _url = `Autenticacao/Autentica?signkey=${signKey}&userKey=${usuarioGuid}`
-        console.log(_url)
         return http.get(_url)
     },
     listaComorbidades: (token) => {

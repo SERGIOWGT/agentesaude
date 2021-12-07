@@ -1,7 +1,6 @@
 <template>
     <v-container fluid style="height: 100vmax;" class="pa-1">
         <TituloPagina titulo="CADASTRO DE VISITA" @cbAnterior="fimCadastro(true)" />
-        Your location data is {{ location.coords.latitude }}, {{ location.coords.longitude}}
         <v-flex v-if="buscandoDados==false">
             <v-expansion-panels focused class="pt-0 mt-2" v-model="painel">
                 <ExpansionVisitaCidadao :nome="infoCidadao.nome" :endereco="enderecoAtual" :nomeEstadoSaude="infoCidadao.nomeEstadoSaude" :nomeMicroArea="infoCidadao.nomeMicroArea"/>
@@ -285,7 +284,6 @@
                     this.salvaVisita()
             },
             async setaTipoMotivo(value) {
-                console.log('setaTipoMotivo(value)', value)
                 this.infoVisita.tipoMotivo.id = value.id;
                 this.infoVisita.tipoMotivoAnalitico.id = 0;
                 this.infoVisita.tipoMotivoAnalitico.nome = ''
@@ -310,15 +308,12 @@
                 let resp = await mainService.listaTipoMotivoVisita()
                 .then (resp => {this.tiposMotivoVisita = (resp.status == 200) ? resp.data : []})
                 .catch (resp => {this.mensagemErro =  mainService.catchPadrao(resp)});
-                console.log('1', this.tiposMotivoVisita)
 
-                console.log('2')
                 this.mensagemAguarde = 'Buscando Tipo de Acão Visita! Aguarde...'
                 await mainService.listaTipoAcaoVisita()
                 .then (resp => {this.tiposAcaoVisita = (resp.status == 200) ? resp.data : []})
                 .catch (resp => {this.mensagemErro =  mainService.catchPadrao(resp)});
 
-                console.log('3', pacienteId)
                 this.mensagemAguarde = 'Buscando informações do cidadão. Aguarde...'
                 await mainService.listaPaciente(pacienteId)
                 .then((_paciente) => {
@@ -361,7 +356,6 @@
                     return
                 }
 
-                console.log('5', pacienteId)
                 this.mensagemAguarde = 'Buscando sintomas do cidadão. Aguarde...'
                 await mainService.listaPacienteSintomas(pacienteId)
                 .then((resp) => {

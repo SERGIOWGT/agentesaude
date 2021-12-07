@@ -13,27 +13,25 @@ const routes = [
         component: homeView
     },
     {
-        path: '/Visita',
+        path: '/visita',
         name: 'visitaView',
         component: visitaView
     },
     {
-        path: '/Upload',
+        path: '/upload',
         name: 'uploadView',
         component: uploadView
     }
 ]
 const RotasApp = new Router({routes})
 RotasApp.beforeEach((to, from, next) => {
-    console.log("from", from.path)
-    console.log("to", to.path)
     console.log(`from => ${from.path}, to => ${to.path}`)
 
     if (to.path =='/') 
         next('/home') ;
     else if ((from.path =='/') && (to.path =='/home')) 
         next();
-    else if (from.path =='/home') 
+    else if ((from.path =='/home') && (to.path !='/home'))
         next();
     else if ((from.path =='/') && ((to.path =='/visita') ||  (to.path =='/upload')))
         next('/home') ;

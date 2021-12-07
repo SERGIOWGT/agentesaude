@@ -146,7 +146,6 @@
                 }
             },
             montaGridPorId() {
-                console.log('montaGridPorId', this.infoPesquisa.pacienteId)
 
                 this.isLoadingGrid = true;
                 let _cidadaos = this.$store.getters.cidadaos;
@@ -166,15 +165,11 @@
                     _dataFimVisita = stringDataBr2Sql(_dataFimVisita)
             
                 const filtroOk = (cidadao) => {
-
                     if (contador >= 150) {
                         return false
                     }   
                     if ((_dataFimVisita) && (cidadao.dataUltimaVisita)) {
-                        if (cidadao.id === 23) {
-                            console.log('cidadao23', cidadao.nome, cidadao.dataUltimaVisita, _dataFimVisita)
-                        }
-                        if (cidadao.dataUltimaVisita > _dataFimVisita) {
+                        if (cidadao.dataUltimaVisita >= _dataFimVisita) {
                             return false
                         };
                     }
@@ -200,9 +195,7 @@
                             let achou = false;
                             for (let i=0; i < this.infoPesquisa.sintomas.length; ++i) {
                                 for (let j=0; j < cidadao.sintomas.length; ++j) {
-                                    console.log('teste', this.infoPesquisa.sintomas[i].id, cidadao.sintomas[j].id)
                                     if (this.infoPesquisa.sintomas[i].id === cidadao.sintomas[j].id) {
-                                        console.log(cidadao.nome, this.infoPesquisa.sintomas[i].id, cidadao.sintomas[j].id, this.infoPesquisa.sintomas[i].id === cidadao.sintomas[j].id)
                                         achou = true;
                                         break;
                                     }
@@ -256,7 +249,17 @@
                     return true;
                 }
                 let _cidadaos = this.$store.getters.cidadaos;
+                
                 this.infoPesquisa.lista = _cidadaos.filter(filtroOk);
+                if (this.infoPesquisa.ordenacao == 1) {
+                    this.infoPesquisa.lista.sort((a, b) => {
+                        const a_ = (a.nomeLogradouro + 'N' + a.numeroEndereco).toUpperCase(); 
+                        const b_ = (b.nomeLogradouro + 'N' + b.numeroEndereco).toUpperCase(); 
+                                               
+                        return a_ == b_ ? 0 : a_ > b_ ? 1 : -1
+                    });
+                }
+
                 this.gridPronto = true
                 this.mensagemAguarde = ''
                 this.fechaPainel()
@@ -305,11 +308,12 @@
                 return (value == null || value === '');
             },
             refresh() {
-                console.log('refresh')
-                if ((this.infoPesquisa.pacienteId == 0) || (this.infoPesquisa.pacienteId == null))
+                if ((this.infoPesquisa.pacienteId == 0) || (this.infoPesquisa.pacienteId == null)) {
                     this.montaGridPorOutros();
-                else 
+                }
+                else {
                     this.montaGridPorId();
+                }
             },
         }
     }

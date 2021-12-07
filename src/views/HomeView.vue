@@ -16,6 +16,7 @@
     </v-flex>
     <v-flex v-else>
       <v-container v-show="mostraTela">
+      <v-alert v-show="infoAlerta.mensagem !== ''" :icon="infoAlerta.icone" :color="infoAlerta.cor" prominent text dark>{{infoAlerta.mensagem}}</v-alert>
       <v-row  dense v-for="item in funcionalidades" :key="item.id" > 
         <v-col cols="12">
           <v-layout class="px-2 py-2" v-show="item.ativo==true">
@@ -55,6 +56,13 @@
       return {
         tokenSistema:'ebe4c237-f13d-11eb-a054-566fe1410274',
 
+        infoAlerta: {
+          mensagem: 'Resre',
+          cor: 'teal',
+          icone: 'mdi-check'
+        },
+        tiposAlerta: [{cor: 'teal', icone: 'mdi-check'}, {cor: 'red lighten-2', icone: 'mdi-exclamation'}],
+
         estaLogando: false,
         estaPerguntando: false,
         ultimaOpcao: 0,
@@ -71,7 +79,7 @@
           {
             id: 1, 
             textColor: color.textColor.menuHome, 
-            text: 'Clique aqui e baixe da nuvem os dados  dos cidadãos atualizados para inicio da visitação ', 
+            text: 'Clique aqui e baixe os dados dos cidadãos atualizados para inicio da visitação ', 
             icon: 'mdi-cloud-download', 
             iconColor: color.icon.menuHome, 
             ativo: false,
@@ -95,6 +103,19 @@
             textColor: color.textColor.menuHome, 
             text: 'Atualize na nuvem as últimas visitas realizadas', 
             icon: 'mdi-cloud-upload', 
+            iconColor: color.icon.menuHome, 
+            ativo: false,
+            func: 'cadastraMonitoramento(2)',
+            perms: [
+              {id:115, tipoId:1, acao:'I'}, 
+              {id:116, tipoId:1, acao:'C'}
+            ]
+          },
+          {   
+            id: 4, 
+            textColor: color.textColor.menuHome, 
+            text: 'Limpa os dados do dispositivo', 
+            icon: 'mdi-delete-outline', 
             iconColor: color.icon.menuHome, 
             ativo: false,
             func: 'cadastraMonitoramento(2)',
@@ -246,14 +267,66 @@
               return ;
             }
             this.$router.push('upload') 
-            break
+            break;
+          case 4:
+            const _numVisitasPendentes  = this.$store.getters.numeroVisitasPendentes;
+            if (_numVisitasPendentes > 0) {
+              this.mensagemErro = 'Há visitas ainda não atualizadas.'
+              return ;
+            }
+            
+            this.executaLimpeza();
+            break;
           default:
             this.mensagemErro = `funcionalidade não implementada [id=${id}]`
         }
       },
       preparaTela() {
         this.mostraTela = false
-        this.funcionalidades[0].ativo = this.funcionalidades[1].ativo = this.funcionalidades[2].ativo = true;
+                // 
+        const _haCargas = this.$store.getters.dadosBaixados;
+        if (_haCargas == false) {
+          this.infoAlerta.mensagem = 'É necessário baixar os dados da nuvem para esse dispositivo';
+          this.infoAlerta.icone = this.tiposAlerta[1].icone;
+          this.infoAlerta.cor = this.tiposAlerta[1].cor;
+
+          this.funcionalidades[0].ativo = true;
+          this.funcionalidades[1].ativo = this.funcionalidades[2].ativo = this.funcionalidades[3].ativo = false;
+        } else {
+          const _numVisitas  = this.$store.getters.numeroVisitas;
+          const _numVisitasPendentes  = this.$store.getters.numeroVisitasPendentes;
+
+          if (_numVisitas === 0) {
+            this.infoAlerta.mensagem = '';
+            this.infoAlerta.mensagem = 'Dispositivo sem visitas cadastradas';
+            this.infoAlerta.icone = this.tiposAlerta[1].icone;
+            this.infoAlerta.cor = this.tiposAlerta[1].cor;
+            this.funcionalidades[0].ativo = false;
+            this.funcionalidades[1].ativo = this.funcionalidades[2].ativo = this.funcionalidades[3].ativo = true;
+          }
+          else if (_numVisitasPendentes === 0) {
+            this.infoAlerta.mensagem = 'Dispositivo atualizado com a nuvem';
+            this.infoAlerta.icone = this.tiposAlerta[1].icone;
+            this.infoAlerta.cor = this.tiposAlerta[1].cor;
+            this.funcionalidades[0].ativo = false; 
+            this.funcionalidades[1].ativo = this.funcionalidades[2].ativo = this.funcionalidades[3].ativo = true;
+          }
+          else if (_numVisitasPendentes === 1) {
+            this.infoAlerta.mensagem = 'Há somente uma visita ainda não atualizada na nuvem';
+            this.infoAlerta.icone = this.tiposAlerta[0].icone;
+            this.infoAlerta.cor = this.tiposAlerta[0].cor;
+            this.funcionalidades[0].ativo = this.funcionalidades[3].ativo = false;
+            this.funcionalidades[1].ativo = this.funcionalidades[2].ativo = true;
+          } else {
+            this.infoAlerta.mensagem = `Há ${_numVisitasPendentes} visitas não atualizadas na nuvem.`;
+            this.infoAlerta.icone = this.tiposAlerta[0].icone;
+            this.infoAlerta.cor = this.tiposAlerta[0].cor;
+
+            this.funcionalidades[0].ativo = this.funcionalidades[3].ativo = false;
+            this.funcionalidades[1].ativo = this.funcionalidades[2].ativo = true;
+          }
+        }
+
         this.mostraTela = true
       },
       async cbBotaoOk() {
@@ -266,6 +339,20 @@
       },
       executaDownload() {
         this.estaPerguntando = true;
+      },
+      executaLimpeza() {
+        const delay = (time) => {return new Promise(resolve => setTimeout(resolve, time))}
+        this.mostraTela = false        
+        this.mensagemAguarde = 'Limpando os dados... Aguarde';
+        this.$store.commit('limpaDados')
+        delay(2000).then(() => {
+          this.mensagemAguarde = '';
+        });
+        delay(2000).then(() => {
+          this.mensagemSucesso = 'Dados limpos com sucesso';
+          this.preparaTela()
+          this.mostraTela = true
+        });
       },
       async baixaDados() {
         let contador = 0;

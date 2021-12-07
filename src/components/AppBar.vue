@@ -9,16 +9,17 @@
         <v-col  class="d-flex justify-center" cols="8">
           <h4>{{titulo}}</h4>
         </v-col>
-        <v-col  class="d-flex justify-center" cols="2">
+        <v-col  class="d-flex justify-center" cols="1">
           <v-icon v-if="!estaOnline" color="warning">mdi-wifi-strength-alert-outline</v-icon>
+        </v-col>
+         <v-col  class="d-flex justify-center" cols="1">
+          <v-btn  icon v-on:click="logout()"><v-icon>mdi-logout</v-icon></v-btn>
         </v-col>
       </v-row>
     </v-app-bar>
-    
 </template>
 <script>
   import color from '../config/colors'
-
   export default {
     name: 'AppBar',
     props: {
@@ -33,7 +34,14 @@
     },
     methods: { 
       goHome() {
-        this.$router.push('/Home').catch(()=>{})
+        this.$router.push('/home').catch(()=>{})
+      },
+      logout() {
+        this.$store.commit('logout')
+        const delay = (time) => {return new Promise(resolve => setTimeout(resolve, time))}
+        delay(1000).then(() => {
+          this.$router.push('/home').catch(()=>{})
+        });
       }
     }
   }
@@ -48,5 +56,4 @@
     justify-items: center;
     align-items: center;
   }
-
 </style>
