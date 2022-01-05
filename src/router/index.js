@@ -25,8 +25,6 @@ const routes = [
 ]
 const RotasApp = new Router({routes})
 RotasApp.beforeEach((to, from, next) => {
-    console.log(`from => ${from.path}, to => ${to.path}`)
-
     if (to.path =='/') 
         next('/home') ;
     else if ((from.path =='/') && (to.path =='/home')) 

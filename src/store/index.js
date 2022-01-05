@@ -34,22 +34,22 @@ const store = new Vuex.Store({
       tbConfig: {
         dataCarga: '',
         usuarioId: '',
-        email: '',
-        microAreaId: '',
-        nomeMicroArea: '',
-        versao: ''
-      },
-      tbUsuario: {
-        email: '',
-        ssoToken: '',
         nomeUsuario: '',
-        usuarioId: '',
-        usuarioGuid: '',
-        cidadePadrao: {
+        email: '',
+        cidadeCarga: {
             id: 0,
             nome: ''
         },
-        unidadeSaudePadrao: {
+        microAreaCarga: {
+          id: 0,
+          nome: ''
+        }
+      },
+      tbUsuario: {
+        email: '',
+        nomeUsuario: '',
+        usuarioId: '',
+        cidadePadrao: {
             id: 0,
             nome: ''
         },
@@ -80,9 +80,11 @@ const store = new Vuex.Store({
       state.statusApp.dadosBaixados = true;
       state.db.tbConfig = JSON.parse(localStorage.getItem(enumNomeTabela.config) ||'[]');
 
+      /*
       if(localStorage.getItem(enumNomeTabela.usuario)) {
         state.db.tbUsuario = JSON.parse(localStorage.getItem(enumNomeTabela.usuario) ||'[]');
       }
+      */
       if(localStorage.getItem(enumNomeTabela.comorbidade)) {
         state.db.tbComorbidades = JSON.parse(localStorage.getItem(enumNomeTabela.comorbidade) ||'[]');
       }
@@ -116,23 +118,22 @@ const store = new Vuex.Store({
       if(localStorage.getItem(enumNomeTabela.desfechoVisita)) {
         state.db.tbDesfechosVisita = JSON.parse(localStorage.getItem(enumNomeTabela.desfechoVisita) ||'[]');
       }
-
-      console.log('state.db.tbAcoes', state.db.tbAcoes)
     },
     autenticaApi (state, obj) {
+
+        console.log('autenticaApi', obj)
         state.statusApp.autenticado = obj.autenticado;
         state.statusApp.estaLogado = true;
         
         state.statusApp.apiToken = obj.token
-
+        state.db.tbUsuario.email = obj.email
+        state.db.tbUsuario.usuarioId = obj.usuarioId
         state.db.tbUsuario.nomeUsuario = obj.nomeUsuario
         state.db.tbUsuario.cidadePadrao.id = obj.cidadeId
         state.db.tbUsuario.cidadePadrao.nome = obj.nomeCidade
-        state.db.tbUsuario.unidadeSaudePadrao.id = obj.unidadeSaudeId
-        state.db.tbUsuario.unidadeSaudePadrao.nome = obj.nomeUnidadeSaude
         state.db.tbUsuario.microAreaPadrao.id = obj.microAreaId
         state.db.tbUsuario.microAreaPadrao.nome = obj.nomeMicroArea
-        localStorage.setItem(enumNomeTabela.usuario, JSON.stringify(state.db.tbUsuario));
+        //localStorage.setItem(enumNomeTabela.usuario, JSON.stringify(state.db.tbUsuario));
 
         const agora = new Date();
         state.statusApp.dataLogin = `${agora.getFullYear()}-${agora.getMonth() + 1}-${agora.getDate()}`;
@@ -164,9 +165,11 @@ const store = new Vuex.Store({
       state.db.tbConfig.dataCarga = new Date();
       state.db.tbConfig.usuarioId = state.db.tbUsuario.usuarioId;
       state.db.tbConfig.email = state.db.tbUsuario.email;
-      state.db.tbConfig.microAreaId = state.db.tbUsuario.microAreaPadrao.id;
-      state.db.tbConfig.nomeMicroArea = state.db.tbUsuario.microAreaPadrao.nome;
-      state.db.tbConfig.versao = 'v1.0'
+      state.db.tbConfig.microAreaCarga.id = state.db.tbUsuario.microAreaPadrao.id;
+      state.db.tbConfig.microAreaCarga.nome = state.db.tbUsuario.microAreaPadrao.nome;
+      state.db.tbConfig.cidadeCarga.id = state.db.tbUsuario.cidadePadrao.id;
+      state.db.tbConfig.cidadeCarga.nome = state.db.tbUsuario.cidadePadrao.nome;
+      state.db.tbConfig.versao = 'v1.0';
      
       localStorage.setItem(enumNomeTabela.acao, JSON.stringify(state.db.tbAcoes));
       localStorage.setItem(enumNomeTabela.bairro, JSON.stringify(dados.bairros));
@@ -252,7 +255,7 @@ const store = new Vuex.Store({
         const _agora = new Date();
         const hours = Math.abs(_agora - _dataLogin) / 36e5;
         console.log('dif.horas', hours)
-        if (hours > 0.40) 
+        if (hours > 0.01) 
           return false;
         
         return true
@@ -264,11 +267,14 @@ const store = new Vuex.Store({
 
     apiToken: state => state.statusApp.apiToken,
     cidadePadrao: state => state.db.tbUsuario.cidadePadrao,
-    
     nomeUsuario: state => state.db.tbUsuario.nomeUsuario,
     microAreaPadrao: state => state.db.tbUsuario.microAreaPadrao,
     unidadeSaudePadrao: state => state.db.tbUsuario.unidadeSaudePadrao,
     userBarAtivo: state => state.statusApp.userBarAtivo && state.statusApp.estaLogado,
+    
+    nomeMicroAreaUltimaCarga: state => state.db.tbConfig.microAreaCarga.nome,
+    
+    microAreaIdUltimaCarga: state => state.db.tbConfig.microAreaCarga.id,
 
     acoesVisita: state => state.db.tbAcoes,
     bairros: state => state.db.tbBairros,

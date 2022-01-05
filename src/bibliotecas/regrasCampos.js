@@ -18,11 +18,34 @@ export default {
     },
     Data: {
       valida(obrigatorio) {
-        // eslint-disable-next-line no-useless-escape
-        if (obrigatorio)
-          return v => /^\d{2}\/\d{2}\/\d{4}$/.test(v) || 'Data inválida'  // eslint-disable-line
-        else
-          return v => !v || /^\d{2}\/\d{2}\/\d{4}$/.test(v) || 'Data inválida'  // eslint-disable-line
+
+        const _dataValida = function(v, obrigatorio) {
+          console.log(v, obrigatorio, !v, !!v)
+          if (obrigatorio == false) {
+            if (!v) {
+              return true;
+            }
+          } else {
+            if (!v) {
+              return 'Data obrigatória';
+            }
+          }
+          if (/^\d{2}\/\d{2}\/\d{4}$/.test(v) == false) // eslint-disable-line
+            return 'Data inválida';
+
+          var _partes = v.split('/');
+          var _dia = parseInt(_partes[0]);
+          var _mes = parseInt(_partes[1]);
+          var _ano = parseInt(_partes[2]);
+          var _dataAux = new Date(_ano, _mes-1, _dia);
+          if ((_dataAux && (_dataAux.getMonth() + 1) == _mes && _dataAux.getDate() == _dia && _dataAux.getFullYear() == _ano) == false)
+            return 'Data inválida';
+
+          return true;
+        }
+
+        return v => _dataValida(v, obrigatorio);
+        
       }
     },
     Cpf: {

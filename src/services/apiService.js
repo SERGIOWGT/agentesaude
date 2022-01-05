@@ -3,9 +3,7 @@ import axios from 'axios'
 axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 
 const http = axios.create({
-    baseURL: 'https://api.homolog.painelsaude.com.br/api/'
-    //baseURL: 'https://api.painelsaude.com.br/api/'
-    //baseURL: 'https://localhost:44308/api/'
+    baseURL: process.env.VUE_APP_API_SERVICE_URL
 })
 
 http.interceptors.request.use(function (config) {

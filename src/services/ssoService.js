@@ -3,9 +3,7 @@ import axios from 'axios'
 axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
 
 const http = axios.create({
-    baseURL: 'https://sso.homolog.painelsaude.com.br/api/'
-    //baseURL: 'https://sso.painelsaude.com.br/api/'
-    //baseURL: 'http://localhost:56486/api/'
+    baseURL: process.env.VUE_APP_SSO_SERVICE_URL
 })
 
 http.interceptors.response.use(function (response) {
@@ -117,6 +115,15 @@ export default {
             'chave': chave
         }
         return http.put('login/EsqueciSenha', params)
+    },
+    trocaSenhaPorCodigo: (signKey, chave, codigoAcesso, senhaNova) => {
+        const params = {
+            'tokenSistema': signKey,
+            'chave': chave,
+            'codigoAcesso': codigoAcesso,
+            'senhaNova': senhaNova
+        }
+        return http.put('login/TrocaSenhaPorCodigo', params)
     },
     catchPadrao: (response) => {
         let mensagemErro = ''

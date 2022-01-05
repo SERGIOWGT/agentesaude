@@ -54,7 +54,7 @@
     },
     data() {
       return {
-        tokenSistema:'ebe4c237-f13d-11eb-a054-566fe1410274',
+        tokenSistema: process.env.VUE_APP_TOKEN_SISTEMA,
 
         infoAlerta: {
           mensagem: 'Resre',
@@ -151,16 +151,16 @@
       },
     },
     methods: {
-      async cbAutenticado(param) {
-        
+      async cbAutenticado(param) {        
         this.mostraTela = false;
-        const usuarioGuid = param.usuarioGuid;
-        const nomeUsuario = param.nomeUsuario;
+        const _usuarioGuid = param.usuarioGuid;
+        const _nomeUsuario = param.nomeUsuario;
+        const _usuarioId = param.usuarioId
         this.mensagemAguarde =  'Registrando o dispositivo na nuvem... Aguarde!'
 
         this.isLoading = true
         let erro = false
-        const resposta = await mainService.autentica(usuarioGuid)        
+        const resposta = await mainService.autentica(_usuarioGuid)        
         .catch (err => {
             this.mensagemAguarde =  ''
             this.isLoading = false
@@ -179,39 +179,50 @@
         }
 
         const _dados = resposta.data
-        if (!((_dados.token) && (_dados.cidadesAutorizadasDTO))) {
+        if (!_dados.token) {
           this.mensagemAguarde =  ''
           this.mensagemErro =  'Erro na autenticacao da Api. [ErroId=32158] '
           return;
         }
 
-        const _cidades = _dados.cidadesAutorizadasDTO
-        if (_cidades.length == 0) {
+        if ((!_dados.cidadeId) || (!_dados.nomeCidade)) {
           this.mensagemAguarde =  ''
-          this.mensagemErro =  'Erro na autenticacao da Api. [ErroId=32157] '
+          this.mensagemErro =  'Código ou nome da Cidade inválidos . [ErroId=32156] '
           return
         }
-
-        if (!((_cidades[0].cidadeId) && (_cidades[0].nomeCidade))) {
+        if (!_dados.microAreaId) {
           this.mensagemAguarde =  ''
-          this.mensagemErro =  'Erro na autenticacao da Api. [ErroId=32156] '
-          return
+          this.mensagemErro = 'Usuário não tem micro área associada.';
+          return;
+        }
+
+        console.log('Login/Carga', _dados.microAreaId, this.$store.getters.microAreaIdUltimaCarga)
+
+        // Pega micro área padrão
+        const _microAreaIdUltimaCarga = this.$store.getters.microAreaIdUltimaCarga;
+        const xota = !_microAreaIdUltimaCarga;
+        console.log('_microAreaIdUltimaCarga', _microAreaIdUltimaCarga, _dados.microAreaId)
+        
+
+        if ((_microAreaIdUltimaCarga) && (_microAreaIdUltimaCarga != 0)) {
+          if (_dados.microAreaId != _microAreaIdUltimaCarga) {
+            this.mensagemAguarde =  ''
+            const _nomeMicroArea = this.$store.getters.nomeMicroAreaUltimaCarga;
+            this.mensagemErro = `Os dados baixados para esse dispositivo são de outra Micro Área [${_nomeMicroArea}]`;
+            return;
+          }
         }
 
         const _param = {
           token: _dados.token,
-          cidadeId: _cidades[0].cidadeId,
-          nomeCidade: _cidades[0].nomeCidade,
-          nomeUsuario: nomeUsuario,
+          email: param.email,
+          nomeUsuario: _nomeUsuario,
+          usuarioId: _usuarioId,
+          cidadeId: _dados.cidadeId,
+          nomeCidade: _dados.nomeCidade,
           autenticado: true,
-          unidadeSaudeId: _cidades[0].unidadeSaudeId,
-          nomeUnidadeSaude: _cidades[0].nomeUnidadeSaude,
-          microAreaId: _cidades[0].microAreaId,
-          nomeMicroArea: _cidades[0].nomeMicroArea,
-          bairroId: _cidades[0].bairroId,
-          nomeBairro: _cidades[0].nomeBairro,
-          logradouroId: _cidades[0].logradouroId,
-          nomeLogradouro: _cidades[0].nomeLogradouro,
+          microAreaId: _dados.microAreaId,
+          nomeMicroArea: _dados.nomeMicroArea
         }
         this.$store.commit('autenticaApi', _param)
         this.mostraTela = false;
@@ -223,12 +234,17 @@
           if (this.ultimaOpcao == 1) {
             this.executaFuncao(this.ultimaOpcao)
           }
-          else 
+          else if (this.ultimaOpcao == 3) {
             this.$router.push('upload') 
+          }
+          else if (this.ultimaOpcao == 4) {
+            this.executaFuncao(this.ultimaOpcao)
+          }
         });
         this.mensagemAguarde =  ''
       },
       executaFuncao(id) {
+        console.log(id)
         this.ultimaOpcao = id;
         switch (id) {
           case 1:
@@ -269,12 +285,19 @@
             this.$router.push('upload') 
             break;
           case 4:
+            if (!this.$store.getters.estaOnLine) {
+              this.mensagemErro = 'É necessário acesso a internet para limpar os dados do dispositivo'
+              return ;
+            }
             const _numVisitasPendentes  = this.$store.getters.numeroVisitasPendentes;
             if (_numVisitasPendentes > 0) {
               this.mensagemErro = 'Há visitas ainda não atualizadas.'
               return ;
             }
-            
+            if (!this.$store.getters.estaLogado) {
+              this.estaLogando = true
+              return ;
+            }
             this.executaLimpeza();
             break;
           default:
@@ -330,12 +353,12 @@
         this.mostraTela = true
       },
       async cbBotaoOk() {
-        
         this.estaPerguntando = false;
         await this.baixaDados();
       },
       cbBotaoNo() {
         this.estaPerguntando = false;
+        this.mostraTela = true
       },
       executaDownload() {
         this.estaPerguntando = true;

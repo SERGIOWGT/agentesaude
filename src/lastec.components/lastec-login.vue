@@ -1,75 +1,36 @@
 <template>
   <v-container fill-height>
     <v-flex>
-      <v-bottom-sheet v-model="showFormTrocaSenha" inset  max-width="500px">
-        <v-sheet class="text-center">
-          <v-card tile class="pa-0 ma-0">
-            <v-card-title class="pa-2 teal lighten-2" > <span class="white--text subtitle-1">TROCA DE SENHA</span> </v-card-title>
-            <v-divider></v-divider>
-            <v-card-text class="pa-0">
-                <v-card-subtitle class="text-start text-subtitle-1">{{mensagemDialog}}</v-card-subtitle>
-                <v-card-text class="text-start"> Informe seu nova senha e depois repita essa senha usando os campos abaixo.</v-card-text>
-                <v-form ref="myForm" class="pt-5 mx-3" v-model="formTrocaSenhaValido">
-                  <v-text-field class="pt-2" clearable 
-                    label="Nova Senha"
-                    v-model="senhaNova"
-                    prepend-icon="mdi-lock"
-                    :counter="tamanhoMaximoSenha"
-                    :rules="[rotinasLogin.SenhaRules.min(tamanhoMinimoSenha), rotinasLogin.SenhaRules.max(tamanhoMaximoSenha), rotinasLogin.SenhaRules.valido(formatoSenha, mensagemErroFormatoSenha)]"
-                    :type="!senhaNovaNaoVisivel ? 'password' : 'text'"
-                    :append-icon="senhaNovaNaoVisivel ? 'mdi-eye' : 'mdi-eye-off'"
-                    :append-icon-cb="() => (senhaNovaNaoVisivel = !senhaNovaNaoVisivel)"
-                    @click:append="senhaNovaNaoVisivel = !senhaNovaNaoVisivel"
-                  />
-                  <v-text-field class="pt-2 pb-3" dense clearable 
-                    label="Repita a Senha"
-                    prepend-icon="mdi-lock"
-                    v-model="senhaRepetida"
-                    counter
-                    :type="!senhaRepetidaNaoVisivel ? 'password' : 'text'"
-                    :append-icon="senhaRepetidaNaoVisivel ? 'mdi-eye' : 'mdi-eye-off'"
-                    :append-icon-cb="() => (senhaRepetidaNaoVisivel = !senhaRepetidaNaoVisivel)"
-                    @click:append="senhaRepetidaNaoVisivel = !senhaRepetidaNaoVisivel"
-                    :rules="[rotinasLogin.SenhaRules.mesmaSenha(senhaNova)]"
-                  />
-                </v-form>
-            </v-card-text>
-            <v-card-actions class="pa-0 ma-0 pr-2 pb-5">
-              <v-spacer></v-spacer>
-              <v-btn text small color="secundary" @click="showFormTrocaSenha=false" :disabled="isLoading">Fechar </v-btn>
-              <v-btn text small color="primary" :disabled="!formTrocaSenhaValido || isLoading" v-on:click="trocaSenha()">Troca Senha</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-sheet>
-      </v-bottom-sheet>
-      <v-bottom-sheet v-model="showFormEsqueciSenha" inset  max-width="500px">
-        <v-sheet class="text-center">
-          <v-card tile class="pa-0 ma-0">
-            <v-card-title class="pa-2 teal lighten-2" > <span class="white--text subtitle-1">RENVIO DE SENHA</span> </v-card-title>
-            <v-divider></v-divider>
-            <v-card-text class="pa-0">
-                <v-card-subtitle class="text-start text-subtitle-1">{{mensagemDialog}}</v-card-subtitle>
-                <v-card-text class="text-start"> Informe o seu email no campo abaixo para enviarmos sua senha.</v-card-text>
-                <v-form ref="myForm" class="pt-5 mx-3" v-model="formEsqueciSenhaValido">
-                  <v-text-field 
-                    :disabled="isLoading"
-                    v-model="email"
-                    :rules="[rotinasLogin.ChaveRules.obrigatorio(), rotinasLogin.ChaveRules.valido(formatoChave)]"
-                    :label="nomeChave"
-                    required
-                    clearable
-                    prepend-icon="mdi-account-circle"
-                ></v-text-field>
-                </v-form>
-            </v-card-text>
-            <v-card-actions class="pa-0 ma-0 pr-2 pb-5">
-              <v-spacer></v-spacer>
-              <v-btn text small color="secundary" @click="showFormEsqueciSenha=false" :disabled="isLoading">Fechar </v-btn>
-              <v-btn text small color="primary" :disabled="!formEsqueciSenhaValido || isLoading" v-on:click="esqueceuSenha()">Envia Senha</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-sheet>
-      </v-bottom-sheet>
+      <v-flex v-if="showFormTrocaSenha">
+          <TrocaSenha
+            :tokenSistema="tokenSistema" 
+            :chave= "email" 
+            :senhaAtual= "senha" 
+            :nomeChave= "nomeChave"
+            :formatoChave="formatoChave"
+            :tamanhoMinimoSenha="tamanhoMinimoSenha"
+            :tamanhoMaximoSenha="tamanhoMaximoSenha"
+            :formatoSenha="formatoSenha" 
+            :mensagemErroFormatoSenha="mensagemErroFormatoSenha"
+            :mensagemMotivoTroca="mensagemDialog"
+            @cbMensagem='cbMensagem'
+            @cbFim='cbFimTrocaSenha'
+          />  
+      </v-flex>
+      <v-flex v-if="showFormEsqueciSenha">
+          <EsqueciSenha
+            :tokenSistema="tokenSistema" 
+            :chave= "email" 
+            :nomeChave= "nomeChave"
+            :formatoChave="formatoChave"
+            :tamanhoMinimoSenha="tamanhoMinimoSenha"
+            :tamanhoMaximoSenha="tamanhoMaximoSenha"
+            :formatoSenha="formatoSenha" 
+            :mensagemErroFormatoSenha="mensagemErroFormatoSenha"
+            @cbMensagem='cbMensagem'
+            @cbFim='cbFimEsqueciSenha'
+          />  
+      </v-flex>
     </v-flex>
     <v-container>
       <MessageBox :tipo="tipoMensagem" :mensagem="mensagem" @cb= 'mensagem = ""'/>        
@@ -86,9 +47,12 @@
             v-model="email"
             :rules="[rotinasLogin.ChaveRules.obrigatorio(), rotinasLogin.ChaveRules.valido(formatoChave)]"
             :label="nomeChave"
+            autofocus
+            @focus="$event.target.select()"
             required
             clearable
             prepend-icon="mdi-account-circle"
+            :id="dynamicID()"
           ></v-text-field>
           <v-text-field 
             :disabled="isLoading"
@@ -97,11 +61,12 @@
             v-model="senha"
             :counter="tamanhoMaximoSenha"
             :rules="[rotinasLogin.SenhaRules.min(tamanhoMinimoSenha), rotinasLogin.SenhaRules.max(tamanhoMaximoSenha), rotinasLogin.SenhaRules.valido(formatoSenha, mensagemErroFormatoSenha)]"
-            :type="!senhaNaoVisivel ? 'password' : 'text'"
+            :type="!senhaVisivel ? 'password' : 'text'"
             prepend-icon="mdi-lock"
-            :append-icon="senhaNaoVisivel ? 'mdi-eye' : 'mdi-eye-off'"
-            :append-icon-cb="() => (senhaNaoVisivel = !senhaNaoVisivel)"
-            @click:append="senhaNaoVisivel = !senhaNaoVisivel"
+            :append-icon="senhaVisivel ? 'mdi-eye' : 'mdi-eye-off'"
+            :append-icon-cb="() => (senhaVisivel = !senhaVisivel)"
+            @click:append="senhaVisivel = !senhaVisivel"
+            :id="dynamicID()"
           />
           <v-row class="justify-center pt-5 mt-5">
               <v-btn :disabled="isLoading || !formValido" class="white--text teal lighten-2 botao-arredondado" v-on:click="autentica()">Acessar</v-btn>
@@ -120,6 +85,8 @@
 <script>
 import MessageBox from '../lastec.components/lastec-messagebox'
 import ProgressBar from '../lastec.components/lastec-progressbar'
+import EsqueciSenha from '../lastec.components/lastec-login-esquecisenha'
+import TrocaSenha from '../lastec.components/lastec-login-trocasenha'
 import sso from '../services/ssoService'
 import RotinasLogin from '../lasTec.Login/bibliotecas/rotinasLogin'
 
@@ -128,32 +95,31 @@ export default {
         tokenSistema: String
     },
     components:{
-      ProgressBar, MessageBox
+      ProgressBar, MessageBox, EsqueciSenha, TrocaSenha
     },
     data() {
       return {
         rotinasLogin: RotinasLogin,
-
+       
         emAbertura: true,
         nomeSistema: ''  ,
         bounce: false,
 
         telaPronta: false,
         
+        tipoMensagem: 0,
+        mensagem: '',
+        mensagemAguarde: '',
+        
         showFormTrocaSenha: false,
         showFormEsqueciSenha: false,
-        formEsqueciSenhaValido: false, 
-        formTrocaSenhaValido: false, 
+                
         formValido: false, 
         isLoading: true,
-        senhaNaoVisivel: false,
-        senhaNovaNaoVisivel: false,
-        senhaRepetidaNaoVisivel: false,
+        senhaVisivel: false,
 
         email: '',
         senha: '',
-        senhaNova: '',
-        senhaRepetida: '',
         
         urlImagemLogin: '',
         tamanhoMinimoSenha: 0,
@@ -162,12 +128,9 @@ export default {
         formatoChave:  '',
         formatoSenha:  '',
         mensagemErroFormatoSenha: '',
-        permiteRegistroUsuario: false,
-
-        tipoMensagem: 0,
-        mensagemDialog: '',
+        permiteRegistroUsuario: false, 
         mensagem: '',
-        mensagemAguarde: ''
+        mensagemAguarde: '',
       }
     },
     mounted() {
@@ -180,22 +143,54 @@ export default {
       }
     },
     computed: {
-      mensagemErro: {
-        get: function() { return this.mensagem},
-        set: function(val) {
-          this.tipoMensagem = 1
-          this.mensagem = val
-        }
-      },
-      mensagemSucesso: {
-        get: function() { return this.mensagem},
-        set: function(val) {
-          this.tipoMensagem = 0
-          this.mensagem = val
-        }
-      },
+        mensagemErro: {
+            get: function() { return this.mensagem},
+            set: function(val) {
+                this.tipoMensagem = 1
+                this.mensagem = val
+            }
+        },
+        mensagemSucesso: {
+            get: function() { return this.mensagem},
+            set: function(val) {
+                this.tipoMensagem = 0
+                this.mensagem = val
+            }
+        },
     },
     methods: {
+        dynamicID() { return 'dynamicID-' + Math.floor(Math.random() * Date.now().toString()); },
+        cbMensagem(tipo, msg) {
+          switch (tipo) {
+            case 'E':
+              this.mensagemErro = msg
+              break;
+            case 'S':
+              this.mensagemSucesso = msg
+              break;
+            case 'A':
+              this.mensagemAguarde = msg
+              break;
+          }
+        },
+        cbFimEsqueciSenha(p) {
+          this.showFormEsqueciSenha = false;
+          this.mensagemAguarde = '';
+          this.senhaVisivel = false
+          if (p.trocouSenha) {
+            this.mensagemSucesso = 'Senha trocada com sucesso. A partir de agora, use a senha nova'
+            this.senha = p.senha
+          }
+        },
+        cbFimTrocaSenha(p) {
+          this.showFormTrocaSenha = false;
+          this.mensagemAguarde = '';
+          this.senhaVisivel = false
+          if (p.trocouSenha) {
+            this.mensagemSucesso = 'Senha trocada com sucesso. A partir de agora, use a senha nova'  
+            this.senha = p.senha
+          }
+        },
         async autentica() {
             this.isLoading =true;
             this.mensagemAguarde =  'Autenticando usuário! Aguarde...'
@@ -271,11 +266,12 @@ export default {
             this.mensagemErroFormatoSenha = _resp.data.mensagemErroFormatoSenha;
 
             /*
+
             let param = {
                 sistemaId: this.sistemaId,
-                nomeSistema: resposta.data.nomeSistema,
-                plataformaId: resposta.data.plataformaId,
-                nomePlataforma: resposta.data.nomePlataforma,
+                nomeSistema: _resp.data.nomeSistema,
+                plataformaId: _resp.data.plataformaId,
+                nomePlataforma: _resp.data.nomePlataforma,
                 urlImagemLogin: this.urlImagemLogin,
                 tamanhoMaximoSenha: this.tamanhoMaximoSenha,
                 tamanhoMinimoSenha: this.tamanhoMinimoSenha,
@@ -286,49 +282,10 @@ export default {
             */
             this.telaPronta= true
         },
-        async esqueceuSenha() {
-            this.isLoading =true;
-            this.mensagemAguarde =  'Solicitando envio da senha! Aguarde...'
-            await sso.esqueceuSenha(this.tokenSistema, this.email, this.senha, this.senhaNova)
-            .then (resp => {
-            this.mensagemAguarde =  ''
-            this.isLoading =false;
-            if (resp.status == 204){
-                this.mensagemSucesso = 'Solicitação feita com sucesso. Verifique o e-mail.'
-                this.showFormEsqueciSenha = false
-            } else {
-                this.mensagemErro =  resp.message
-            } 
-            })
-            .catch (err => {
-            this.mensagemAguarde =  '';
-            this.isLoading =false; 
-            this.mensagemErro =  sso.catchPadrao(err)
-            });
-        },
-        async trocaSenha() {
-            this.isLoading =true;
-            this.mensagemAguarde =  'Trocando a senha! Aguarde...'
-            await sso.trocaSenha(this.tokenSistema, this.email, this.senha, this.senhaNova)
-            .then (resp => {
-            this.mensagemAguarde =  ''
-            this.isLoading =false;
-            if (resp.status == 204){
-                this.mensagemSucesso = 'Senha trocada com sucesso. A partir de agora, use a senha nova'
-                this.showFormTrocaSenha = false
-            } else {
-                this.mensagemErro =  resp.message
-            } 
-            })
-            .catch (err => {
-            this.mensagemAguarde =  '';
-            this.isLoading =false; 
-            this.mensagemErro =  sso.catchPadrao(err)
-            });
-        },
         mostraformEsqueciSenha() {
             this.showFormEsqueciSenha =true
         },
+        
     }
 }
 

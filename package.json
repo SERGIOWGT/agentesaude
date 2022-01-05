@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "dev": "vue-cli-service serve --mode dev",
+    "homolog": "vue-cli-service serve --mode homolog",
+    "build-homolog": "vue-cli-service build --mode homolog",
+    "build-prod": "vue-cli-service build --mode prod"
   },
   "dependencies": {
     "@babel/core": "^7.16.0",

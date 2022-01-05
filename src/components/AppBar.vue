@@ -2,7 +2,7 @@
     <v-app-bar app flat dark  :color="background" class="pr-2">
       <v-row class="linha">
         <v-col  class="d-flex justify-center" cols="2">
-          <v-btn icon v-on:click="goHome()">
+          <v-btn icon v-on:click="goHome()" v-show="temBotaoMenu == true">
             <img color="white" src="../assets/logo.png">
           </v-btn>
         </v-col>
@@ -12,8 +12,8 @@
         <v-col  class="d-flex justify-center" cols="1">
           <v-icon v-if="!estaOnline" color="warning">mdi-wifi-strength-alert-outline</v-icon>
         </v-col>
-         <v-col  class="d-flex justify-center" cols="1">
-          <v-btn  icon v-on:click="logout()"><v-icon>mdi-logout</v-icon></v-btn>
+         <v-col  class="d-flex justify-center" cols="1" >
+          <v-btn  icon v-on:click="logout()" v-show="temBotaoSair == true"><v-icon>mdi-logout</v-icon></v-btn>
         </v-col>
       </v-row>
     </v-app-bar>
@@ -23,7 +23,11 @@
   export default {
     name: 'AppBar',
     props: {
-      estaOnline: Boolean, titulo: String, urlLogo: String
+      estaOnline: Boolean, 
+      titulo: String, 
+      urlLogo: String,
+      temBotaoMenu: Boolean,
+      temBotaoSair: Boolean
     },
     data() {
       return {

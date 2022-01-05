@@ -1,6 +1,7 @@
 <template>
    <v-app>
-    <AppBar :estaOnline="$store.getters.estaOnLine" :titulo="nomeSistema" :urlLogo="urlLogo"/>
+    <AppBar :estaOnline="$store.getters.estaOnLine" :titulo="nomeSistema" :urlLogo="urlLogo"
+            :temBotaoMenu="true" :temBotaoSair="false"/>
       <v-main>
         <v-container grid-list-md class="pa-0" style="max-width: 600px;">
           <UserBar v-if="$store.getters.userBarAtivo"/>

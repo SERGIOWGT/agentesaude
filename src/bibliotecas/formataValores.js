@@ -21,11 +21,15 @@ export function stringDataBr2Sql(v) {
 }
 export function data2String(data, padrao) {
     if (!data)
-        return ''
+        return '';
+        
     padrao = (padrao == null) ? 'SQL' : padrao.toUpperCase();
 
-    const dia = data.getDate().toString().padStart(2, "0")
-    return (padrao == 'BR') ? `${dia}/${data.getMonth() + 1}/${data.getFullYear()}` : `${data.getFullYear()}-${data.getMonth() + 1}-${data.getDate()}`
+    const _dia = data.getDate().toString().padStart(2, "0")
+    const _mes = (data.getMonth() + 1).toString().padStart(2, "0")
+    
+    return (padrao == 'BR') ? 
+        `${_dia}/${_mes}/${data.getFullYear()}` : `${data.getFullYear()}-${_mes}-${_dia}`
 }
 export function string2Data(data, formato, delimitador) {
     const _formato = formato.toLowerCase();
@@ -41,7 +45,26 @@ export function string2Data(data, formato, delimitador) {
         
     return new Date(_itensData[_iAno], _mes,_itensData[_iDia]);
 }
+export function strDateTime2StrDateBr(dateTime, formato, delimitador) {
 
+    if (!dateTime) {
+        return '';
+    }
+    const _dataSplit = dateTime.split('T');
+    if (_dataSplit.length == 0)
+        return '';
+
+    const _data = _dataSplit[0];
+    const _formato = formato.toLowerCase();
+    const _itens = _formato.split(delimitador)
+    const _itensData = _data.split(delimitador)
+
+    const _iMes =_itens.indexOf("mm");
+    const _iDia =_itens.indexOf("dd");
+    const _iAno=_itens.indexOf("yyyy");
+        
+    return `${_itensData[_iDia]}/${_itensData[_iMes]}/${_itensData[_iAno]}`;
+}
 
 /*
 
